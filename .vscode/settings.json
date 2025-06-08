@@ -1,0 +1,7 @@
+{
+  // 파일을 저장할 때 자동으로 포매팅을 수행하도록 설정
+  "editor.formatOnSave": true,
+
+  // TypeScript, JavaScript, JSON 등의 파일 형식에 대해 기본 포매터로 Biome을 사용하도록 설정
+  "editor.defaultFormatter": "biomejs.biome",
+}

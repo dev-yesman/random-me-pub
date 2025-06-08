@@ -1,0 +1,9 @@
+node_modules
+.next
+
+# 환경변수 파일
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
