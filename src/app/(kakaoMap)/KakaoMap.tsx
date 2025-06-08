@@ -11,6 +11,9 @@ const API_KEY = process.env.NEXT_PUBLIC_KAKAO_MAP_API_KEY;
 const KakaoMap = () => {
 	const [center, setCenter] = useState({ lat: 37.5665, lng: 126.978 }); // 기본값: 서울시청
 	const [mapLoaded, setMapLoaded] = useState(false);
+	const [locationLoading, setLocationLoading] = useState(true);
+	const [locationStatus, setLocationStatus] = useState<'loading' | 'success' | 'failed' | 'denied'>('loading');
+	const [showLocationAlert, setShowLocationAlert] = useState(false);
 	const [mapObj, setMapObj] = useState<KakaoMap | null>(null);
 	const [markers, setMarkers] = useState<KakaoMarker[]>([]);
 	// const [isDarkMode, setIsDarkMode] = useState(false);
@@ -95,35 +98,101 @@ const KakaoMap = () => {
 		if (typeof window === 'undefined' || !mapLoaded) return;
 		
 		console.log("위치 정보 가져오기 시도");
-		try {
-			if (navigator.geolocation) {
-				navigator.geolocation.getCurrentPosition(
-					// 성공 시
-					(position) => {
-						console.log("위치 정보 획득 성공:", position.coords);
-						setCenter({
-							lat: position.coords.latitude,
-							lng: position.coords.longitude,
-						});
-					},
-					// 실패 시
-					(error) => {
-						console.warn("위치 정보를 가져올 수 없습니다:", error.message);
-						console.log("기본 위치 사용: 서울시청");
-						// 기본 위치 유지 (서울시청)
-					},
-					// 옵션
-					{ 
-						enableHighAccuracy: false, // 높은 정확도 비활성화로 빠른 응답
-						timeout: 10000, // 10초로 타임아웃 증가
-						maximumAge: 300000 // 5분까지 캐시된 위치 사용 가능
+		
+		// Geolocation API 지원 여부 확인
+		if (!navigator.geolocation) {
+			console.warn("이 브라우저는 위치 정보를 지원하지 않습니다.");
+			return;
+		}
+
+		// 권한 상태 확인 (지원되는 브라우저에서)
+		if ('permissions' in navigator) {
+			navigator.permissions.query({ name: 'geolocation' }).then((result) => {
+				console.log("위치 권한 상태:", result.state);
+				if (result.state === 'denied') {
+					console.warn("위치 권한이 거부되었습니다. 설정에서 권한을 허용해주세요.");
+				}
+			}).catch((err) => {
+				console.log("권한 확인 실패:", err);
+			});
+		}
+
+		// 먼저 빠른 위치 획득 시도
+		const fastOptions = {
+			enableHighAccuracy: false,
+			timeout: 5000,
+			maximumAge: 60000 // 1분
+		};
+
+		const accurateOptions = {
+			enableHighAccuracy: true,
+			timeout: 15000,
+			maximumAge: 300000 // 5분
+		};
+
+		const handleSuccess = (position: GeolocationPosition) => {
+			const { latitude, longitude, accuracy } = position.coords;
+			console.log(`위치 정보 획득 성공: (${latitude}, ${longitude}), 정확도: ${accuracy}m`);
+			setCenter({
+				lat: latitude,
+				lng: longitude,
+			});
+			setLocationStatus('success');
+			setLocationLoading(false);
+			setShowLocationAlert(true);
+			
+			// 3초 후 알림 숨기기
+			setTimeout(() => setShowLocationAlert(false), 3000);
+		};
+
+		const handleError = (error: GeolocationPositionError, isSecondTry = false) => {
+			let errorMessage = "위치 정보를 가져올 수 없습니다: ";
+			let status: 'failed' | 'denied' = 'failed';
+			
+			switch (error.code) {
+				case error.PERMISSION_DENIED:
+					errorMessage += "위치 권한이 거부되었습니다.";
+					status = 'denied';
+					break;
+				case error.POSITION_UNAVAILABLE:
+					errorMessage += "위치 정보를 사용할 수 없습니다.";
+					break;
+				case error.TIMEOUT:
+					errorMessage += "위치 정보 요청이 시간 초과되었습니다.";
+					if (!isSecondTry) {
+						console.log("정확한 위치 정보로 재시도...");
+						navigator.geolocation.getCurrentPosition(
+							handleSuccess,
+							(err) => handleError(err, true),
+							accurateOptions
+						);
+						return;
 					}
-				);
-			} else {
-				console.log("Geolocation API를 사용할 수 없습니다.");
+					break;
+				default:
+					errorMessage += "알 수 없는 오류가 발생했습니다.";
+					break;
 			}
+			
+			console.warn(errorMessage);
+			console.log("기본 위치 사용: 서울시청");
+			setLocationStatus(status);
+			setLocationLoading(false);
+			setShowLocationAlert(true);
+			
+			// 5초 후 알림 숨기기 (에러 메시지는 조금 더 오래)
+			setTimeout(() => setShowLocationAlert(false), 5000);
+		};
+
+		// 첫 번째 시도: 빠른 위치 획득
+		try {
+			navigator.geolocation.getCurrentPosition(
+				handleSuccess,
+				handleError,
+				fastOptions
+			);
 		} catch (error) {
-			console.error("위치 정보 가져오기 오류:", error);
+			console.error("위치 정보 가져오기 중 예외 발생:", error);
 		}
 	}, [mapLoaded]);
 
@@ -296,8 +365,8 @@ const KakaoMap = () => {
 		
 	}, [mapObj, clearMarkers]);
 
-	// 장소 검색 훅 사용
-	useKakaoPlaces(mapObj, center, handlePlacesFound);
+	// 장소 검색 훅 사용 - 위치 로딩이 완료된 후에만
+	useKakaoPlaces(mapObj && !locationLoading ? mapObj : null, center, handlePlacesFound);
 
 	// 지도 클릭 시 InfoWindow 닫기
 	useEffect(() => {
@@ -511,12 +580,62 @@ const KakaoMap = () => {
 	// SSR에서는 렌더링하지 않음
 	if (!mounted) return null;
 
+	// 로딩 메시지 결정
+	const getLoadingMessage = () => {
+		if (!mapLoaded) {
+			return "지도를 불러오는 중...";
+		}
+		if (locationLoading) {
+			return "위치 정보를 가져오는 중...";
+		}
+		return "";
+	};
+
+	const getLocationStatusMessage = () => {
+		switch (locationStatus) {
+			case 'denied':
+				return "📍 위치 권한이 거부되어 기본 위치(서울시청)를 사용합니다";
+			case 'failed':
+				return "📍 위치 정보를 가져올 수 없어 기본 위치(서울시청)를 사용합니다";
+			case 'success':
+				return "📍 현재 위치 기준으로 주변 음식점을 검색했습니다";
+			default:
+				return "";
+		}
+	};
+
+	const showLoading = !mapLoaded || locationLoading;
+
 	return (
 		<div className="relative w-full h-full">
 			<div id="map" className="w-full h-full" />
-			{!mapLoaded && (
-				<div className="absolute inset-0 flex items-center justify-center bg-white bg-opacity-70">
-					<p className="text-lg font-semibold">지도를 불러오는 중...</p>
+			
+			{/* 로딩 오버레이 */}
+			{showLoading && (
+				<div className="absolute inset-0 flex flex-col items-center justify-center bg-white bg-opacity-90 z-50">
+					<div className="flex flex-col items-center space-y-4">
+						{/* 로딩 스피너 */}
+						<div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-500 border-t-transparent"></div>
+						<p className="text-lg font-semibold text-gray-700">{getLoadingMessage()}</p>
+						{locationLoading && (
+							<p className="text-sm text-gray-500 text-center max-w-xs">
+								정확한 맛집 추천을 위해 위치 권한을 허용해주세요
+							</p>
+						)}
+					</div>
+				</div>
+			)}
+
+			{/* 위치 상태 알림 */}
+			{showLocationAlert && (
+				<div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-40 animate-fade-in-down">
+					<div className={`px-4 py-2 rounded-lg shadow-lg text-sm font-medium transition-all duration-300 ${
+						locationStatus === 'success' 
+							? 'bg-green-100 text-green-800 border border-green-200' 
+							: 'bg-yellow-100 text-yellow-800 border border-yellow-200'
+					}`}>
+						{getLocationStatusMessage()}
+					</div>
 				</div>
 			)}
 		</div>
