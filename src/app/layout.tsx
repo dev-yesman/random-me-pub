@@ -67,7 +67,9 @@ export const metadata: Metadata = {
   },
   verification: {
     google: "google-site-verification-code", // 나중에 Google Search Console에서 발급받은 코드로 교체
-    // naver: "naver-site-verification-code", // 네이버 웹마스터도구 인증 코드
+    other: {
+      "naver-site-verification": "369db38af9a9e2f5e68aaade7e4ef18bd307cb86",
+    },
   },
   alternates: {
     canonical: "https://random-me.com",

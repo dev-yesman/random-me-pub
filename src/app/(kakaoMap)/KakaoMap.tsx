@@ -225,9 +225,19 @@ const KakaoMap = () => {
 		setMapObj(map);
 	}, []);
 
-	// 지도 훅 사용 - mapLoaded가 true일 때만 실행
+	// 지도 훅 사용 - mapLoaded가 true일 때만 실행, 첫 번째 center로만 초기화
 	const shouldInitMap = mounted && mapLoaded;
-	useKakaoMap(shouldInitMap ? "map" : "", center, onMapReady);
+	const [initialCenter] = useState(center); // 최초 center 값으로 고정
+	useKakaoMap(shouldInitMap ? "map" : "", initialCenter, onMapReady);
+
+	// 지도가 준비된 후 center 변경 시 지도 중심 이동
+	useEffect(() => {
+		if (mapObj && !locationLoading) {
+			console.log("지도 중심 이동:", center);
+			const newCenter = new window.kakao.maps.LatLng(center.lat, center.lng);
+			mapObj.setCenter(newCenter);
+		}
+	}, [mapObj, center.lat, center.lng, locationLoading]);
 
 	// 5. 기존 마커 정리 함수 - useRef로 최신 markers 참조
 	const markersRef = useRef<KakaoMarker[]>([]);

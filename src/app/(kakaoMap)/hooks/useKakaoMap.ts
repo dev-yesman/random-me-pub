@@ -21,9 +21,12 @@ export function useKakaoMap(containerId: string, center: { lat: number; lng: num
       return;
     }
 
-    // 이미 지도가 생성되었다면 중복 생성 방지
+    // 이미 지도가 생성되었다면 중복 생성 방지하고 center만 업데이트
     if (mapCreatedRef.current && mapRef.current) {
-      console.log("지도가 이미 생성되어 있음");
+      console.log("지도가 이미 생성되어 있음 - center만 업데이트");
+      const kakaoMap = mapRef.current as KakaoMap;
+      const newCenter = new window.kakao.maps.LatLng(center.lat, center.lng);
+      kakaoMap.setCenter(newCenter);
       return;
     }
 
@@ -33,11 +36,11 @@ export function useKakaoMap(containerId: string, center: { lat: number; lng: num
       // 지도 옵션 설정
       const options = {
         center: new window.kakao.maps.LatLng(center.lat, center.lng),
-        level: 2, // 더 확대된 레벨 (1-14, 숫자가 작을수록 확대)
-        draggable: true, // 드래그는 가능
-        scrollwheel: false, // 마우스 휠 줌 비활성화
-        disableDoubleClick: true, // 더블클릭 줌 비활성화
-        disableDoubleClickZoom: true, // 더블클릭 줌 비활성화
+        level: 3, // 적당한 확대 레벨 (1-14, 숫자가 작을수록 확대)
+        draggable: true, // 드래그 가능
+        scrollwheel: true, // 마우스 휠 줌 활성화
+        disableDoubleClick: false, // 더블클릭 줌 활성화
+        disableDoubleClickZoom: false, // 더블클릭 줌 활성화
       };
       
       // 지도 생성
@@ -45,8 +48,12 @@ export function useKakaoMap(containerId: string, center: { lat: number; lng: num
       mapRef.current = map;
       mapCreatedRef.current = true;
       
-      // 줌 컨트롤 비활성화
-      map.setZoomable(false);
+      // 줌 컨트롤 활성화
+      map.setZoomable(true);
+      
+      // 줌 컨트롤 UI 추가
+      const zoomControl = new window.kakao.maps.ZoomControl();
+      map.addControl(zoomControl, window.kakao.maps.ControlPosition.RIGHT);
       
       console.log("지도 생성 완료");
 
