@@ -237,7 +237,7 @@ const KakaoMap = () => {
 			const newCenter = new window.kakao.maps.LatLng(center.lat, center.lng);
 			mapObj.setCenter(newCenter);
 		}
-	}, [mapObj, center.lat, center.lng, locationLoading]);
+	}, [mapObj, center, locationLoading]);
 
 	// 5. 기존 마커 정리 함수 - useRef로 최신 markers 참조
 	const markersRef = useRef<KakaoMarker[]>([]);

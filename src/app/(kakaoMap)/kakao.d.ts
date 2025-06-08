@@ -26,6 +26,8 @@ declare global {
 		getLevel(): number;
 		panTo(latlng: KakaoLatLng): void;
 		setZoomable(zoomable: boolean): void;
+		addControl(control: KakaoZoomControl, position: string): void;
+		removeControl(control: KakaoZoomControl): void;
 		// 필요시 추가 메서드 선언 가능
 	}
 
@@ -49,6 +51,10 @@ declare global {
 		getTitle(): string;
 		setZIndex(zIndex: number): void;
 		// 필요시 추가 메서드 선언 가능
+	}
+
+	interface KakaoZoomControl {
+		getPosition(): string;
 	}
 
 	interface KakaoPlace {
@@ -108,6 +114,17 @@ declare global {
 					yAnchor?: number;
 					zIndex?: number;
 				}) => KakaoInfoWindow;
+				ZoomControl: new () => KakaoZoomControl;
+				ControlPosition: {
+					TOP: string;
+					TOPLEFT: string;
+					TOPRIGHT: string;
+					LEFT: string;
+					RIGHT: string;
+					BOTTOMLEFT: string;
+					BOTTOM: string;
+					BOTTOMRIGHT: string;
+				};
 				Pagination: KakaoPagination;
 				event: {
 					addListener: (target: KakaoMap | KakaoMarker, type: string, handler: () => void) => void;
