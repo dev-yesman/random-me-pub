@@ -39,7 +39,7 @@ export default function Header() {
             priority 
             className="transform translate-y-0.5"
           />
-          <h1 className="text-2xl font-bold">RandomMe</h1>
+          <h1 className="text-2xl font-bold">랜덤미</h1>
         </Link>
         
         {/* 데스크톱 메뉴 */}
