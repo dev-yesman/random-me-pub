@@ -30,17 +30,17 @@ export default function Header() {
     <header className="bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-md">
       <div className="container mx-auto px-4 h-16 flex items-center justify-between">
         {/* 로고 */}
-        <div className="flex items-center space-x-2">
+        <Link href="/" className="flex items-center space-x-2 hover:opacity-90 transition-opacity" aria-label="RandomMe 홈페이지로 이동">
           <Image 
             src="/randome_logo.svg" 
-            alt="랜덤미 로고" 
+            alt="RandomMe 랜덤 음식점 추천 서비스 로고" 
             width={40} 
             height={40} 
             priority 
             className="transform translate-y-0.5"
           />
-          <h1 className="text-2xl font-bold">랜덤미</h1>
-        </div>
+          <h1 className="text-2xl font-bold">RandomMe</h1>
+        </Link>
         
         {/* 데스크톱 메뉴 */}
         <nav className="hidden md:flex items-center space-x-6">
@@ -67,10 +67,13 @@ export default function Header() {
         
         {/* 모바일 메뉴 토글 버튼 */}
         <button 
-          className="md:hidden text-white focus:outline-none"
+          className="md:hidden text-white focus:outline-none focus:ring-2 focus:ring-yellow-300 rounded p-2"
           onClick={() => setIsMenuOpen(!isMenuOpen)}
+          aria-label={isMenuOpen ? "메뉴 닫기" : "메뉴 열기"}
+          aria-expanded={isMenuOpen}
+          aria-controls="mobile-menu"
         >
-          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
             {isMenuOpen ? (
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             ) : (
@@ -82,8 +85,8 @@ export default function Header() {
       
       {/* 모바일 메뉴 */}
       {isMenuOpen && (
-        <div className="md:hidden bg-blue-600 px-4 py-2">
-          <nav className="flex flex-col space-y-3 pb-3">
+        <div id="mobile-menu" className="md:hidden bg-blue-600 px-4 py-2">
+          <nav className="flex flex-col space-y-3 pb-3" role="navigation" aria-label="모바일 내비게이션">
             <Link href="/" className="text-white hover:text-yellow-300 py-2 transition-colors">홈</Link>
             <button 
               onClick={() => showToast('즐겨찾기 기능은 준비 중입니다.')}

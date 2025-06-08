@@ -1,4 +1,4 @@
-# Randome - 주변 음식점 룰렛
+# RandomMe - 주변 음식점 룰렛
 
 사용자의 현재 위치를 기반으로 주변 음식점을 찾아주고, 룰렛을 통해 랜덤하게 선택해주는 웹 애플리케이션입니다.
 
@@ -28,7 +28,7 @@
 ### 1. 저장소 클론
 ```bash
 git clone <repository-url>
-cd randome
+cd randomme
 ```
 
 ### 2. 의존성 설치

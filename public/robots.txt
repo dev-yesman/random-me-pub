@@ -1,0 +1,25 @@
+User-agent: *
+Allow: /
+
+# 사이트맵 위치
+Sitemap: https://random-me.com/sitemap.xml
+
+# 크롤링 최적화
+Crawl-delay: 1
+
+# 검색엔진별 최적화
+User-agent: Googlebot
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+
+User-agent: NaverBot
+Allow: /
+
+User-agent: DaumBot
+Allow: /
+
+# 제외할 경로 (필요시)
+# Disallow: /api/
+# Disallow: /admin/
